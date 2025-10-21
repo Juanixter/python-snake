@@ -1,51 +1,48 @@
 import pygame
-import sys
-
 from food import Food
-from constants import cell_size, number_of_cells, GREEN
 from snake import Snake
 
-pygame.init()
-pygame.display.set_caption("Python Snake")
+from constants import number_of_cells
 
-screen = pygame.display.set_mode((cell_size * number_of_cells, cell_size * number_of_cells))
+class Game:
+    def __init__(self, screen: pygame.Surface):
+        self.snake = Snake( screen = screen )
+        self.food = Food( screen = screen, snake_body = self.snake.body )
+        self.state = "RUNNING"
+        self.score = 0
 
-clock = pygame.time.Clock()
+    def draw(self):
+        self.food.draw()
+        self.snake.draw()
 
-food_surface = pygame.image.load('graphics/food.png')
+    def update(self):
+        if self.state == "RUNNING":
+            self.snake.update()
+            self.check_collision_with_food()
+            self.check_collision_with_edges()
+            self.check_collision_with_tail()
 
-food = Food( screen = screen, food_surface = food_surface )
-snake = Snake( screen = screen )
+    def check_collision_with_food(self):
+        if self.snake.body[0] == self.food.position:
+            self.food.position = self.food.generate_random_pos( self.snake.body )
+            self.snake.add_segment = True
+            self.score += 1
+            self.snake.eat_sound.play()
 
-SNAKE_UPDATE = pygame.USEREVENT
-pygame.time.set_timer(
-    event = SNAKE_UPDATE,
-    millis = 200
-)
+    def check_collision_with_edges(self):
+        if self.snake.body[0].x == number_of_cells or self.snake.body[0].x == -1:
+            self.game_over()
+        if self.snake.body[0].y == number_of_cells or self.snake.body[0].y == -1:
+            self.game_over()
 
-while True:
-    for event in pygame.event.get():
-        if event.type == SNAKE_UPDATE:
-            snake.update()
+    def check_collision_with_tail(self):
+        headless_body = self.snake.body[1:]
+        if self.snake.body[0] in headless_body:
+            self.game_over()
 
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP and snake.direction != pygame.Vector2(0,1):
-                snake.direction = pygame.Vector2(0,-1)
-            if event.key == pygame.K_DOWN and snake.direction != pygame.Vector2(0,-1):
-                snake.direction = pygame.Vector2(0,1)
-            if event.key == pygame.K_LEFT and snake.direction != pygame.Vector2(1,0):
-                snake.direction = pygame.Vector2(-1,0)
-            if event.key == pygame.K_RIGHT and snake.direction != pygame.Vector2(-1,0):
-                snake.direction = pygame.Vector2(1,0)
-    
-    # DRAWING
-    screen.fill(GREEN)
-    food.draw()
-    snake.draw()
-
-    pygame.display.update()
-    clock.tick(60)
+    def game_over(self):
+        self.snake.reset()
+        self.food.position = self.food.generate_random_pos(self.snake.body)
+        self.state = "STOPPED"
+        self.score = 0
+        self.snake.wall_hit_sound.play()
