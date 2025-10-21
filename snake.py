@@ -1,23 +1,27 @@
+from pygame import Vector2
 import pygame
-import sys
+from constants import DARK_GREEN, cell_size
 
-pygame.init()
+class Snake:
 
-GREEN = (173, 204, 96)
-DARK_GREEN = (43, 51, 24)
+    def __init__(self, screen : pygame.Surface):
 
-screen = pygame.display.set_mode((750,750))
+        self.screen = screen
 
-pygame.display.set_caption("Python Snake")
+        self.body = [ Vector2(6,9), Vector2(5,9), Vector2(4,9) ]
+        self.direction = Vector2(1,0)
 
-clock = pygame.time.Clock()
+    def draw(self):
+        for segment in self.body:
+            segment_rect = pygame.Rect( segment.x * cell_size, segment.y * cell_size, cell_size, cell_size )
+            pygame.draw.rect(
+                surface = self.screen,
+                color = DARK_GREEN,
+                rect = segment_rect,
+                border_radius = 7
+            )
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+    def update(self):
 
-    screen.fill(GREEN)
-    pygame.display.update()
-    clock.tick(60)
+        self.body.pop()
+        self.body.insert(0, self.body[0] + self.direction)
